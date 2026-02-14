@@ -34,11 +34,49 @@
             display: block;
         }
 
+        /* Control de música */
+        .music-control {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 77, 77, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ff4d4d;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
+        }
+
+        .music-control:hover {
+            transform: scale(1.1);
+            background: rgba(255, 77, 77, 0.5);
+            box-shadow: 0 0 30px #ff4d4d;
+        }
+
+        .music-control.playing {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px #ff4d4d; }
+            50% { box-shadow: 0 0 40px #ff4d4d; }
+            100% { box-shadow: 0 0 20px #ff4d4d; }
+        }
+
         /* Botón Spotify */
         .spotify-btn {
             position: fixed;
             top: 15px;
-            right: 15px;
+            left: 15px;
             z-index: 5;
             background: rgba(29, 185, 84, 0.2);
             backdrop-filter: blur(10px);
@@ -242,7 +280,7 @@
             background: linear-gradient(45deg, #ff3333, #ff6666);
         }
 
-        /* Distancia indicator */
+        /* Distance indicator */
         .distance-badge {
             background: rgba(255,77,77,0.2);
             border: 1px solid #ff4d4d;
@@ -456,8 +494,18 @@
     </style>
 </head>
 <body>
+    <!-- Audio con "Querer Querernos" de Canserbero - Versión Acústica -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="https://github.com/jasonmontalvo/amor/raw/refs/heads/main/Canserbero%20-%20Querer%20Querernos%20(Versi%C3%B3n%20Ac%C3%BAstica).mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
 
     <canvas id="bg"></canvas>
+
+    <!-- Control de música -->
+    <div class="music-control" id="musicToggle" onclick="toggleMusic()">
+        🔇
+    </div>
 
     <!-- Botón Spotify -->
     <a href="https://open.spotify.com/intl-es/track/6d3q0F9VNtdxQUTVlRcet6" 
@@ -565,6 +613,45 @@
     
     <script type="module">
         import * as THREE from 'three';
+        
+        // Configuración de música
+        const audio = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        let isPlaying = false;
+        
+        // Ajustar volumen suave
+        audio.volume = 0.3;
+
+        window.toggleMusic = function() {
+            if (isPlaying) {
+                audio.pause();
+                musicToggle.innerHTML = '🔇';
+                musicToggle.classList.remove('playing');
+            } else {
+                // Intentar reproducir
+                audio.play().then(() => {
+                    musicToggle.innerHTML = '🎵';
+                    musicToggle.classList.add('playing');
+                    
+                    // Fade in suave
+                    audio.volume = 0.1;
+                    let vol = 0.1;
+                    const fadeIn = setInterval(() => {
+                        if (vol < 0.3) {
+                            vol += 0.05;
+                            audio.volume = vol;
+                        } else {
+                            clearInterval(fadeIn);
+                        }
+                    }, 200);
+                    
+                }).catch(error => {
+                    console.log('Error al reproducir:', error);
+                    alert('Por favor, toca el botón de música para reproducir');
+                });
+            }
+            isPlaying = !isPlaying;
+        };
         
         // Elementos DOM
         const clickMeContainer = document.getElementById('clickMeContainer');
@@ -678,6 +765,16 @@
             init3D();
             setupEventListeners();
             initRose();
+            
+            // Pre-cargar audio
+            audio.load();
+            
+            // Notificación sutil de música
+            setTimeout(() => {
+                if (!isPlaying) {
+                    musicToggle.style.animation = 'pulse 2s 3';
+                }
+            }, 3000);
         }
 
         function init3D() {
